@@ -1,8 +1,12 @@
+library(tidyverse)
+library(scales)
 library(shiny)
 library(plotly)
+
+#library(repmis) #loads data from DropBox
+#library(forcats)
+library(anytime)
 library(dplyr)
-library(repmis)
-library(formattable)
 
 
 
@@ -10,122 +14,141 @@ library(formattable)
 ### Data alojada en DropBox
 
 
-
-
-tvs <- reactive({source_data("https://www.dropbox.com/s/1jhmyinvyshtms3/2017-04-29-total-tvs.csv?raw=1")})
-
+#ecommerce <- reactive({source_data("https://www.dropbox.com/s/vde35nfjhybfvr7/ecommerce.csv?raw=1")})
 
 
 
+#str(ecommerce())
 
 
 
 server <- function(input, output) {
   
   
-  output$plot <- renderPlotly({
+  
+  
+  ########
+  
+  
+  ecommerce <- read.csv("D:\\RCoursera\\r-s-l\\base-de-datos\\ecommerce-bd\\2017-09-11-ecommerce-bd.csv",
+                        as.is = TRUE)
+  
+  
+  ecommerce$fecha <- anydate(ecommerce$fecha, asUTC = FALSE, useR = FALSE)
+  
+  
+  
+  
+  fechas_vector <-reactive({
     
-    
-    tvs.rango <- tvs() %>%
-      group_by(periodo, ecommerce, rango) %>%
-      summarise(cantidad = length(rango))
-    
-    
-    
-    
-    
-    tvs.rango$periodo <- factor(tvs.rango$periodo, levels = c(2017,2016),
-                                ordered = T)
-    
-    
-    
-    tvs.rango$ecommerce <- factor(tvs.rango$ecommerce, levels = c("linio",
-                                                                  "ripley",
-                                                                  "falabella"),
-                                  ordered = T)
-    
-    
-    
-    
-    
-    tvs.rango$rango <- factor(tvs.rango$rango, levels = c("< S/.500",
-                                                          "S/.500 -\r\n S/.1500",
-                                                          "S/.1500 -\r\n S/.2500",
-                                                          "S/.2500 -\r\n S/.3500",
-                                                          "S/.3500 -\r\n S/.4500",
-                                                          "> S/.4,500"),
-                              ordered = T)
-    
-    
-    
-    
-    
-    ggplotly(ggplot(tvs.rango, aes(x = rango, y = cantidad, fill = ecommerce)) +
-               geom_bar(stat = "identity") + 
-               scale_fill_manual("ecommerce",
-                                 values = c("linio" = "#FF5500","ripley" = "#802D69","falabella" = "#BED800")) +
-               facet_grid(~ periodo) +
-               theme_bw() +
-               coord_flip() +
-               #theme_ipsum_rc(grid = "X") +
-               theme(axis.text.x = element_text(colour="grey10",size=10,hjust=.5,vjust=.5,face="plain"),
-                     axis.text.y = element_text(colour="grey10",size=10,hjust=1,vjust=0,face="plain"),  
-                     axis.title.x = element_text(colour="grey40",size=16,angle=0,hjust=.5,vjust=0,face="plain"),
-                     axis.title.y = element_text(colour="grey40",size=16,angle=90,hjust=.5,vjust=.5,face="plain"),
-                     plot.title = element_text(size = 24,vjust=4, face="bold"),
-                     plot.subtitle = element_text(vjust=2, size = 16),
-                     plot.caption = element_text(vjust=2, size = 16),
-                     panel.border = element_rect(colour = "white"),
-                     legend.position = "none",
-                     strip.text = element_text(size = 18, hjust = 0.01, vjust = -0.5),
-                     strip.background = element_rect(colour = "white", fill = "white"),
-                     panel.grid.major.y = element_blank(),
-                     panel.grid.minor.y = element_blank()) +
-               #geom_text(aes(label=cantidad), hjust=-0.25, size = 4) +
-               ylim(0, 300) +
-               labs(title = "", subtitle = "", caption = "",
-                    x = "", y = ""))
+    c(input$dateRange[1], input$dateRange[2])
     
   })
   
   
   
-  output$table <- renderDataTable({tvs()},
-    options = list(lengthMenu = c(5, 30, nrow(tvs())), pageLength = 15))
+  
+  ecommerce_fechas <- reactive({
+    
+    filter(ecommerce, fecha >= fechas_vector()[1], fecha <= fechas_vector()[2])                       
+    
+  })
   
   
+  
+  
+  
+  ########
+  
+  
+  
+  
+  
+  
+  
+  
+  output$dateRangeText  <- renderText({
+    
+    paste("input$dateRange is", 
+          paste(as.character(input$dateRange), collapse = " to "))
+  })
+  
+  
+  
+# 
+# 
+#   output$plot1<- renderPlot({
+# 
+#     ecommerce.ripley <- ecommerce() %>%
+#       filter(ecommerce == "Ripley",
+#              fecha >= input$dateRange[1] & fecha <= input$dateRange[2]) %>%
+#       group_by(categoria) %>%
+#       summarise(precio.actual = sum(precio.actual, na.rm = T)) %>%
+#       mutate(categoria=factor(categoria, levels=categoria))
+# 
+# 
+# 
+# 
+#     ggplot(ecommerce.ripley,
+#            #aes(fct_reorder(categoria, precio.actual, .desc = FALSE), precio.actual, fill = categoria)) +
+#            aes(categoria, precio.actual, fill = categoria)) +
+#            geom_col() +
+#       labs(x="Categoría", y="Precio actual S/.",
+#            title="Ripley - Totales por categoría",
+#            subtitle="",
+#            caption="Brought to you by the letter 'g'") +
+#       # #scale_color_ipsum() +
+#       theme_ipsum_rc(grid="X") +
+#       scale_fill_ipsum() +
+#       geom_text(aes(label=scales::comma(precio.actual)), hjust=0, nudge_y=2000) +
+#       scale_y_comma(limits = c(0,1000000)) +
+#       coord_flip()
+# 
+#   })
+# 
+# 
+# 
+#   output$plot2 <- renderPlot({
+# 
+#     ecommerce2 <- ecommerce() %>%
+#       filter(ecommerce == input$ecommerce) %>%
+#       group_by(categoria) %>%
+#       summarise(precio.actual = sum(precio.actual, na.rm = T)) %>%
+#       mutate(categoria=factor(categoria, levels=categoria))
+# 
+# 
+# 
+# 
+#     ggplot(ecommerce2,
+#            aes(fct_reorder(categoria, precio.actual, .desc = FALSE), precio.actual, fill = categoria)) +
+#       geom_col() +
+#       labs(x="Categoría", y="Precio actual S/.",
+#            subtitle="",
+#            caption="Brought to you by the letter 'g'") +
+#       # #scale_color_ipsum() +
+#       theme_ipsum_rc(grid="X") +
+#       scale_fill_ipsum() +
+#       geom_text(aes(label=scales::comma(precio.actual)), hjust=0, nudge_y=2000) +
+#       scale_y_comma(limits = c(0,10000000)) +
+#       coord_flip() +
+#       ggtitle(paste(input$ecommerce, "Totales por categoría", sep = " - "))
+# 
+#   })
+
+  ### PROBANDO DATA RANGE
+
+  #AQUI
+  # 
+  # ecommerce_datarange <- ecommerce() %>%
+  #                        filter(fecha >= input$dateRange[1] & fecha <= input$dateRange[2])
+  # 
+  # 
+  output$tbl = DT::renderDataTable({
+    
+    ecommerce_fechas() 
+      
+      
+  })
+    
 }
 
-
-
-# output$tvstotales <- renderValueBox({
-#   # The downloadRate is the number of rows in pkgData since
-#   # either startTime or maxAgeSecs ago, whichever is later.
-#   # tvs.cantidad <- tvs()  %>%
-#   #                 group_by(periodo, ecommerce) %>%
-#   #                 summarise(cantidad = length(marca))
-#   # 
-#   
-#   totales <- 100
-#   
-#   valueBox(
-#     value = formatC(totales, digits = 1, format = "f"),
-#     subtitle = "Total TVs",
-#     icon = icon("area-chart")
-#   )
-# })
-
-# 
-# # 
-# teles <- reactiveValues(a = 123)
-# 
-# output$vbox <- renderValueBox({
-# 
-#   
-# 
-#   valueBox(
-#     "Title",
-#     teles(),
-#     icon = icon("television")
-#   )
-# })

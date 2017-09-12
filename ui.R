@@ -2,6 +2,8 @@ library(shiny)
 library(shinydashboard)
 library(plotly)
 library(formattable)
+library(DT)
+library(hrbrthemes)
 
 
 
@@ -43,8 +45,20 @@ body <- dashboardBody(
             
     ),
     tabItem(tabName = "dashboard",
-            plotlyOutput("plot"),
-            verbatimTextOutput("event")
+            dateRangeInput('dateRange',
+                           label = 'Seleccione fechas',
+                           start = Sys.Date() - 10, end = Sys.Date(),
+                           language = 'es', separator = " al "),
+            column(6,
+                   #verbatimTextOutput("dateText"),
+                   #verbatimTextOutput("dateText2"),
+                   verbatimTextOutput("dateRangeText")
+                   #verbatimTextOutput("dateRangeText2")
+            ),
+            
+            verbatimTextOutput("event"),
+            DT::dataTableOutput('tbl')
+            
     ),
     
     tabItem(tabName = "widgets",

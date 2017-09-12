@@ -27,7 +27,7 @@ header <- dashboardHeader(title = 'Ripley.com Dashboard',
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-    menuItem("Widgets", icon = icon("th"), tabName = "widgets",
+    menuItem("Categorias", tabName = "Categorias", icon = icon("th"),
              badgeLabel = "new", badgeColor = "green")
   )
 )
@@ -57,11 +57,19 @@ body <- dashboardBody(
             ),
             
             verbatimTextOutput("event"),
+            br(),
+            br(),
+            plotOutput(outputId = "ripley_plot", height = "300px"),
+            br(),
+            br(),
+            plotOutput(outputId = "ripley_categorias_plot", height = "500px"),
+            br(),
+            br(),
             DT::dataTableOutput('tbl')
             
     ),
     
-    tabItem(tabName = "widgets",
+    tabItem(tabName = "Categorias",
             h2("Widgets tab content"),
             dataTableOutput('table')
     )

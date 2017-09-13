@@ -29,13 +29,13 @@ server <- function(input, output) {
   ########
   
   
-  #ecommerce <- read.csv("D:\\RCoursera\\r-s-l\\base-de-datos\\ecommerce-bd\\2017-09-11-ecommerce-bd.csv",
-  #                      as.is = TRUE) #PC
+  ecommerce <- read.csv("D:\\RCoursera\\r-s-l\\base-de-datos\\ecommerce-bd\\2017-09-13-ecommerce-bd.csv",
+                       as.is = TRUE) #PC
   
   
   
-  ecommerce <- read.csv("D:\\rls\\tvs-comparativo\\base-de-datos\\ecommerce-bd\\2017-09-11-ecommerce-bd.csv",
-                        as.is = TRUE) #LAPTOP
+  #ecommerce <- read.csv("D:\\rls\\tvs-comparativo\\base-de-datos\\ecommerce-bd\\2017-09-13-ecommerce-bd.csv",
+   #                     as.is = TRUE) #LAPTOP
   
   
   ecommerce$fecha <- anydate(ecommerce$fecha, asUTC = FALSE, useR = FALSE)
@@ -61,13 +61,12 @@ server <- function(input, output) {
   
   
   
-  ecommerce_ripley <- reactive({
+  ecommerce_totales <- reactive({
     
     
     ecommerce %>%
       group_by(ecommerce) %>%
-      filter(ecommerce == "Ripley",
-             fecha >= fechas_vector()[1], fecha <= fechas_vector()[2]) %>%
+      filter(fecha >= fechas_vector()[1], fecha <= fechas_vector()[2]) %>%
       summarise(precio.actual = sum(precio.actual, na.rm = TRUE))
     
     
@@ -76,17 +75,32 @@ server <- function(input, output) {
   
   
   
-  ecommerce_ripley_categorias <- reactive({
+  ecommerce_categorias <- reactive({
     
     
     ecommerce %>%
       group_by(ecommerce, categoria) %>%
-      filter(ecommerce == "Ripley",
+      filter(ecommerce == input$ecommerce_selected,
              fecha >= fechas_vector()[1], fecha <= fechas_vector()[2]) %>%
       summarise(precio.actual = sum(precio.actual, na.rm = TRUE))
     
     
   })
+  
+  
+  
+  
+  ecommerce_boxplot <- reactive({
+    
+    
+    ecommerce %>%
+    group_by(ecommerce, categoria) %>%
+    summarise(precio.actual = sum(precio.actual, na.rm = TRUE))
+  
+  
+  })
+  
+  
   
   
   
@@ -109,14 +123,15 @@ server <- function(input, output) {
   
   
   
-  output$ripley_plot <- renderPlot({
+  output$ecommerce_totales_plot <- renderPlot({
     
-    ggplot(ecommerce_ripley(), aes(ecommerce, precio.actual)) +
-      geom_col(fill = "#9966ff", colour = "#b3b3b3") +
+    ggplot(ecommerce_totales(), aes(ecommerce, precio.actual, fill=ecommerce)) +
+      geom_col() +
+      scale_fill_manual(values = c("Ripley" = "#0D0C0C", "Falabella" = "#289512")) +
       geom_text(aes(label=scales::comma(precio.actual)), vjust=-0.5) +
       theme_ipsum(grid="Y") +
-      labs(title = "Ripley - Total", y = "Precio actual en S/.") +
-      scale_y_comma(limits=c(0,150000000))
+      labs(title = "Ecommerce Perú - Totales", y = "Precio actual en S/.") +
+      scale_y_comma(limits=c(0,500000000))
       
     
   })
@@ -124,16 +139,17 @@ server <- function(input, output) {
   
   
   
-  output$ripley_categorias_plot <- renderPlot({
+  output$categorias_plot <- renderPlot({
     
-    ggplot(ecommerce_ripley_categorias(), aes(fct_reorder(categoria, precio.actual), precio.actual, fill=categoria)) +
+    ggplot(ecommerce_categorias(), aes(fct_reorder(categoria, precio.actual), precio.actual, fill=categoria)) +
       geom_col() +
       geom_text(aes(label=scales::comma(precio.actual)), hjust=-0.2) +
       theme_ipsum(grid="X") +
       theme(legend.position="none") +
-      labs(title = "Ripley - Total", x = "", y = "Precio actual en S/.") +
+      labs(x = "", y = "Precio actual en S/.") +
       scale_y_comma(limits = c(0, 20000000)) +
-      coord_flip()
+      coord_flip() +
+      ggtitle(paste(input$ecommerce_selected," - Categorias"))
     
     
     
@@ -148,6 +164,24 @@ server <- function(input, output) {
       
       
   })
+  
+  
+  
+  output$tbl_boxplot = DT::renderDataTable({
+    
+    ecommerce_boxplot() 
+    
+    
+  })
+  
+  
+  
+  output$boxplot <- renderPlotly({
+    
+    plot_ly(ecommerce_boxplot(), y = ~precio.actual, color = ~ecommerce, type = "box")
+  
+    })
+  
     
 }
 

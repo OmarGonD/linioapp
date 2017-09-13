@@ -59,19 +59,25 @@ body <- dashboardBody(
             verbatimTextOutput("event"),
             br(),
             br(),
-            plotOutput(outputId = "ripley_plot", height = "300px"),
+            plotOutput(outputId = "ecommerce_totales_plot", height = "400px"),
             br(),
             br(),
-            plotOutput(outputId = "ripley_categorias_plot", height = "500px"),
+            selectInput("ecommerce_selected", "Elija un Ecommerce:",
+                        list("Ripley", "Falabella")
+                        ),
+            plotOutput(outputId = "categorias_plot", height = "500px"),
             br(),
-            br(),
-            DT::dataTableOutput('tbl')
+            br()
             
     ),
     
     tabItem(tabName = "Categorias",
-            h2("Widgets tab content"),
-            dataTableOutput('table')
+            h2("Ecommerce - Categorias - Boxplots"),
+            plotlyOutput("boxplot"),
+            br(),
+            br(),
+            #DT::dataTableOutput('tbl')
+            DT::dataTableOutput('tbl_boxplot')
     )
   )
 )
